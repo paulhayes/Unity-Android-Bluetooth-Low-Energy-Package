@@ -1,11 +1,11 @@
 /*
-
   Arduino Nano 33 BLE
-  Seeed Xaio Nrf52840
+  Arduino Nano 33 BLE Sense ( https://docs.arduino.cc/tutorials/nano-33-ble-sense-rev2/cheat-sheet/  )
+  Seeed Xaio Nrf52840 ( https://wiki.seeedstudio.com/XIAO_BLE/ )
   Seeed Xaio Nrf52840 Sense
-  Adafruit Feather 
+  Adafruit Feather ( https://learn.adafruit.com/introducing-the-adafruit-nrf52840-feather/pinouts )
 */
-#if defined(ARDUINO_Seeed_XIAO_nRF52840) || defined(ARDUINO_Seeed_XIAO_nRF52840_Sense)
+#if defined(ARDUINO_Seeed_XIAO_nRF52840) || defined(ARDUINO_Seeed_XIAO_nRF52840_Sense) || defined(ARDUINO_NRF52840_FEATHER_SENSE)
 #define USE_BLUEFRUIT
 #endif
 
@@ -16,6 +16,8 @@
 #elif defined(ARDUINO_ARDUINO_NANO33BLE)
 #define DEVICE_NAME "Nano 33 BLE"
 #define PIN_VBAT A0
+#elif defined(ARDUINO_NRF52840_FEATHER_SENSE)
+#define DEVICE_NAME "nRF Feather Sense"
 #else
 #define DEVICE_NAME "Generic Device"
 #define PIN_VBAT A0
@@ -49,7 +51,7 @@ BLECharacteristic batteryLevelChar("2A19",  // standard 16-bit characteristic UU
 BLECharacteristic temperatureChar("2A6E",  // standard 16-bit characteristic UUID
     BLERead | BLENotify); // remote clients will be able to get notifications if this characteristic changes
 
-BLECharacteristic greenLedChar("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLECharacteristic ledCharacteristic("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 
 #else 
 BLEUnsignedCharCharacteristic batteryLevelChar("2A19",  // standard 16-bit characteristic UUID
@@ -58,7 +60,7 @@ BLEUnsignedCharCharacteristic batteryLevelChar("2A19",  // standard 16-bit chara
 BLEIntCharacteristic temperatureChar("2A6E",  // standard 16-bit characteristic UUID
     BLERead | BLENotify); // remote clients will be able to get notifications if this characteristic changes
 
-BLEBoolCharacteristic greenLedChar("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
+BLEBoolCharacteristic ledCharacteristic("19B10000-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
 #endif
 
 int oldBatteryLevel = 0;  // last battery level reading from analog input
@@ -71,8 +73,6 @@ void setup() {
   Serial.begin(9600);    // initialize serial communication
   //while (!Serial);
 
-  pinMode(LED_RED, OUTPUT); // initialize the built-in LED pin to indicate when a central is connected
-  pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
 
 
@@ -112,9 +112,9 @@ void setup() {
   temperatureChar.setFixedLen(2);
   temperatureChar.begin();
   
-  greenLedChar.setFixedLen(1);
-  greenLedChar.setWriteCallback(onLEDChanged);
-  greenLedChar.begin();
+  ledCharacteristic.setFixedLen(1);
+  ledCharacteristic.setWriteCallback(onLEDChanged);
+  ledCharacteristic.begin();
   
 
 
@@ -134,7 +134,7 @@ void setup() {
   */
   genericService.addCharacteristic(batteryLevelChar); // add the battery level characteristic
   genericService.addCharacteristic(temperatureChar);
-  genericService.addCharacteristic(greenLedChar);
+  genericService.addCharacteristic(ledCharacteristic);
   
   BLE.setLocalName(DEVICE_NAME);
   BLE.addService(batteryService); // Add the battery service
@@ -151,7 +151,7 @@ void setup() {
   BLE.setEventHandler(BLEConnected, blePeripheralConnectHandler);
   BLE.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
 
-  greenLedChar.setEventHandler(BLEWritten, onLEDChanged);
+  ledCharacteristic.setEventHandler(BLEWritten, onLEDChanged);
 
   // start advertising
   BLE.advertise();
@@ -179,11 +179,13 @@ void loop() {
 
 #ifdef USE_BLUEFRUIT
 void blePeripheralConnectHandler(uint16_t conn_handle) {
+  ledCharacteristic.write8((uint8_t)true);
 #else
 void blePeripheralConnectHandler(BLEDevice central) {
   // central connected event handler
   Serial.print("Connected event, central: ");
   Serial.println(central.address());
+  ledCharacteristic.writeValue(true);
 #endif
     // turn on the LED to indicate the connection:
   digitalWrite(LED_BLUE, LOW);
@@ -205,11 +207,11 @@ void onLEDChanged(uint16_t conn_hdl, BLECharacteristic* chr, uint8_t* data, uint
   bool isOn = (bool)data[0];
 #else
 void onLEDChanged(BLEDevice central, BLECharacteristic characteristic){
-  bool isOn = greenLedChar.value();
+  bool isOn = ledCharacteristic.value();
 #endif
   Serial.print("LED value written: ");
   Serial.println(isOn);
-  digitalWrite(LED_GREEN, isOn ? LOW : HIGH); 
+  digitalWrite(LED_BLUE, isOn ? LOW : HIGH); 
 }
 
 void updateBatteryLevel() {
