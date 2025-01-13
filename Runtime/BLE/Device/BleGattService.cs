@@ -51,7 +51,7 @@ namespace Android.BLE
             // If a shorthand UUID is passed
             if (characteristicUuid.Length == 4)
             {
-                characteristicUuid = "0000" + characteristicUuid + "-0000-1000-8000-00805f9b34fb";
+                characteristicUuid = ShortToLongUUID(characteristicUuid);
             }
 
             characteristicUuid = characteristicUuid.ToLower();
@@ -62,6 +62,10 @@ namespace Android.BLE
             }
 
             return _characteristicsMap[characteristicUuid];
+        }
+
+        public static string ShortToLongUUID(string uuid){
+            return "0000" + uuid + "-0000-1000-8000-00805f9b34fb";
         }
     }
 }

@@ -14,6 +14,11 @@
             "displayName": "Bluetooth Low Energy Example",
             "description": "Bluetooth Low Energy Example",
             "path": "Samples~/Bluetooth Low Energy Example"
+        },
+        {
+            "displayName": "Arduino Communication Sample",
+            "description": "Sample to connect and communicate with popular",
+            "path": "Samples~/Arduino Communication Sample"
         }
     ]
 }

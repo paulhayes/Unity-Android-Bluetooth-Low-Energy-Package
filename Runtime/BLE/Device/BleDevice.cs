@@ -134,7 +134,7 @@ namespace Android.BLE
             // If a shorthand UUID is passed
             if (serviceUuid.Length == 4)
             {
-                serviceUuid = "0000" + serviceUuid + "-0000-1000-8000-00805f9b34fb";
+                serviceUuid = BleGattService.ShortToLongUUID(serviceUuid);
             }
 
             serviceUuid = serviceUuid.ToLower();
