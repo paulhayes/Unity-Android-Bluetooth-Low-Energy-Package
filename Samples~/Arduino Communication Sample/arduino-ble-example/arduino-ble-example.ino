@@ -1,9 +1,13 @@
 /*
+
+  Written to work with the following boards.
+
   Arduino Nano 33 BLE
   Arduino Nano 33 BLE Sense ( https://docs.arduino.cc/tutorials/nano-33-ble-sense-rev2/cheat-sheet/  )
   Seeed Xaio Nrf52840 ( https://wiki.seeedstudio.com/XIAO_BLE/ )
   Seeed Xaio Nrf52840 Sense
-  Adafruit Feather ( https://learn.adafruit.com/introducing-the-adafruit-nrf52840-feather/pinouts )
+  Adafruit Nrf52840 Feather Sense ( https://learn.adafruit.com/introducing-the-adafruit-nrf52840-feather/pinouts )
+  Seeed Xaio ESP32C3
 */
 #if defined(ARDUINO_Seeed_XIAO_nRF52840) || defined(ARDUINO_Seeed_XIAO_nRF52840_Sense) || defined(ARDUINO_NRF52840_FEATHER_SENSE)
 #define USE_BLUEFRUIT
@@ -11,13 +15,20 @@
 
 #if defined(ARDUINO_Seeed_XIAO_nRF52840_Sense) || defined(ARDUINO_SEEED_XIAO_NRF52840_SENSE)
 #define DEVICE_NAME "XIAO nRF52 Sense"
+#define LED LED_BLUE
 #elif defined(ARDUINO_Seeed_XIAO_nRF52840) || defined(ARDUINO_SEEED_XIAO_NRF52840)
 #define DEVICE_NAME "XIAO nRF52"
+#define LED LED_BLUE
 #elif defined(ARDUINO_ARDUINO_NANO33BLE)
 #define DEVICE_NAME "Nano 33 BLE"
 #define PIN_VBAT A0
+#define LED LED_BLUE
 #elif defined(ARDUINO_NRF52840_FEATHER_SENSE)
 #define DEVICE_NAME "nRF Feather Sense"
+#define LED LED_BLUE
+#elif defined(ARDUINO_XIAO_ESP32C3)
+#define DEVICE_NAME "XIAO ESP32C3"
+#define LED 10
 #else
 #define DEVICE_NAME "Generic Device"
 #define PIN_VBAT A0
@@ -73,7 +84,9 @@ void setup() {
   Serial.begin(9600);    // initialize serial communication
   //while (!Serial);
 
-  pinMode(LED_BLUE, OUTPUT);
+  #ifdef LED
+  pinMode(LED, OUTPUT);
+  #endif
 
 
   #ifdef USE_HTS221
@@ -188,18 +201,23 @@ void blePeripheralConnectHandler(BLEDevice central) {
   ledCharacteristic.writeValue(true);
 #endif
     // turn on the LED to indicate the connection:
-  digitalWrite(LED_BLUE, LOW);
+#ifdef LED
+  digitalWrite(LED, LOW);
+#endif
 }
 
 #ifdef USE_BLUEFRUIT
 void blePeripheralDisconnectHandler(uint16_t conn_handle, uint8_t reason) {
+  Serial.print("Disconnected event");
 #else
 void blePeripheralDisconnectHandler(BLEDevice central) {
   // central disconnected event handler
   Serial.print("Disconnected event, central: ");
   Serial.println(central.address());
 #endif
-  digitalWrite(LED_BLUE, HIGH);
+#ifdef LED
+  digitalWrite(LED, HIGH);
+#endif
 }
 
 #ifdef USE_BLUEFRUIT
@@ -211,14 +229,18 @@ void onLEDChanged(BLEDevice central, BLECharacteristic characteristic){
 #endif
   Serial.print("LED value written: ");
   Serial.println(isOn);
-  digitalWrite(LED_BLUE, isOn ? LOW : HIGH); 
+#ifdef LED
+  digitalWrite(LED, isOn ? LOW : HIGH); 
+#else
+    Serial.println(isOn ? "LED on" : "LED off")
+#endif
 }
 
+#ifdef PIN_VBAT
 void updateBatteryLevel() {
   /* Read the current voltage level on the A0 analog input pin.
      This is used here to simulate the charge level of a battery.
   */
-
   int battery = analogRead(PIN_VBAT);
   int batteryLevel = map(battery, 0, 1023, 0, 100);
 
@@ -233,6 +255,10 @@ void updateBatteryLevel() {
     oldBatteryLevel = batteryLevel;           // save the level for next comparison
   }
 }
+#else
+void updateBatteryLevel() {
+}
+#endif
 
 void updateTemperature(){
   

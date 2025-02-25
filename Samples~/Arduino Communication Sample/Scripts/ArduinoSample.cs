@@ -43,6 +43,8 @@ public class ArduinoSample : MonoBehaviour
         m_disconnectButton.onClick.AddListener(DisconnectDevice);
         m_ledToggle.onValueChanged.AddListener(OnChangeLED);
         m_devicePanel.SetActive(false);
+
+        BleManager.Instance.Initialize();
     }
 
 
@@ -68,13 +70,14 @@ public class ArduinoSample : MonoBehaviour
         }
         if(m_bleDevice!=null){
             m_bleDevice.Connect(OnConnected,OnDisconnected);
+            return;
         }
         Debug.Log("Scanning");
         m_button.interactable = false;
         int scanDuration = 5 * 1000;
         m_lastScanEndTime = Time.time + scanDuration/1000f;
-        BleManager.Instance.SearchForDevicesWithFilter(scanDuration, OnDeviceFound, serviceUuid:genericService);
-        //BleManager.Instance.SearchForDevices(scanDuration, OnDeviceFound);
+        
+        BleManager.Instance.SearchForDevicesWithFilter(scanDuration, OnDeviceFound, serviceUuid:genericService);        
     }
 
     private void SubscribeTemp()
@@ -127,7 +130,7 @@ public class ArduinoSample : MonoBehaviour
         if(!success){
             return;
         }
-        Debug.Log(BitConverter.ToString(data));
+        Debug.Log($"OnLedValueRetrieved {BitConverter.ToString(data)}");
         //m_ledToggle.isOn = BitConverter.ToChar(data)!=0;
     }
 

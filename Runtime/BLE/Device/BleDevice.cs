@@ -60,7 +60,6 @@ namespace Android.BLE
         {
             _onConnected = onConnected;
             _onDisconnected = onDisconnected;
-
             BleTask task = new BleTask("connectToBleDevice", MacAddress, (int)Transportations.TRANSPORT_LE);
             _connectionTaskId = BleManager.Instance.SendTask(task, this);
         }
